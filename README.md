@@ -5,3 +5,10 @@ This is being developed as my application to the 2024/2025 Maynooth Data Science
 
 Intention is to have an easy-to-use webapp that will take in spending from a user on one side and populate a graph in the main section.
 This graph will fit a line to the spending and through a series of informative & humours images indicate to the user if they're going to make it through the month/period with any money.
+
+INPUTS:
+->  PAYCHECK AMOUNT
+->  DAYS UNTIL NEXT PAYCHECK
+->  DAY-BY-DAY AGGREGATE SPENDING
+
+Initial solution will be rough, but there's ample ways to improve. Key to be concious of time when deciding scope of project.
