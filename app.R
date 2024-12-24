@@ -6,6 +6,7 @@ library(shinythemes) # Adding themeing package, quick way to make app more appea
 
 # Define UI for application
 ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes library called above - I like the superhero theme, found @ https://rstudio.github.io/shinythemes/
+                
     navbarPage(
       title = "Paycheck2Paycheck", # Text displayed in the top left corner
       
@@ -14,24 +15,27 @@ ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes
                sidebarPanel( # Our "input" panel
                  width = 3, # spacing, allowing for the 3 side-by-side segments
                  tags$h3("Input:"),
-                 textInput("txt1", "Given Name:", ""),
-                 textInput("txt2", "Surname:", ""),
+                 numericInput("num", "Money Move", value = 0, min = -1000, max = 1000),
+                 actionButton("click", "Commit", class = "btn-lg btn-success"),
+                 
+                 # not functional yet, but looks semi-decent
                  
                ), # sidebarPanel - input ends
                
                mainPanel(
                  width = 6, # spacing, allowing for the 3 side-by-side segments
                  h1("This Paycheck:"),
-                 verbatimTextOutput("txtout"),
+                 
+                 plotOutput("spendPlot"), # currently just some placeholder data from LM module
 
                ), # mainPanel ends
                
-               sidebarPanel( # Our "image" panelS
+               sidebarPanel( # Our "image" panel
                  width = 3, # spacing, allowing for the 3 side-by-side segments
                  h4("How we're feeling:"),
                  img(src="https://dudewipes.com/cdn/shop/articles/gigachad.jpg?v=1667928905&width=1024",
                      height = 150,
-                     width = 300), # Placeholder image for now.
+                     width = 300), # Placeholder image for now. - should reach to lm fit
                  
                ), # sidebarPanel - image  ends
                
@@ -46,18 +50,16 @@ ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes
 
 
 
-# Define server logic required to draw a histogram
+# Define server logic required to plot the spending
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
+    output$spendPlot <- renderPlot({ # data from linear models module, should be fed in from user
+      x <- seq(1, 30, 1)
+      e <- rnorm(30, 0, 5)
+      y <- 10 + 2 * x + e
+      plot(x, y)
+      f1 <- lm(y~x)
+      abline(f1, col = 2)
     })
 }
 
