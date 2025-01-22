@@ -59,16 +59,18 @@ ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes
 server <- function(input, output) {
   
   # Reactive values to store inputs
-  user_data <- reactiveValues(days = NULL, paycheck = NULL, moneyMoves = numeric())
+  user_data <- reactiveValues(days = NULL, paycheck = NULL, moneyMoves = numeric(), pressCounter = 0)
   
   observeEvent(input$buildGraphButton, { # observeEvents looks for 'build graph' button presses, at which point it can update the stored values
     user_data$days <- input$days
     user_data$paycheck <- input$paycheck
     user_data$moneyMoves <- numeric() # Reset moneyMoves when building a new graph
+    user_data$pressCounter <- 0 # Reset counter when building a new graph
   })
   
   observeEvent(input$moneyMoveButton, { # Appends moneyMoves vector with new values, each ideally for consecutive days
-    user_data$moneyMoves <- c(user_data$moneyMoves, input$moneyMoves)
+    user_data$pressCounter <- user_data$pressCounter + 1
+    user_data$moneyMoves[user_data$pressCounter] <- input$moneyMove
   })
   
   output$spendPlot <- renderPlot({
@@ -82,6 +84,15 @@ server <- function(input, output) {
     y <- numeric(length(x)) # Initialize y as a numeric vector of zeros
     y[1] <- user_data$paycheck # Balance begins as the amount your paycheck is worth
     
+    for (i in 2:length(x)) {
+      if (i - 1 <= length(user_data$moneyMoves)) {
+        y[i] <- y[i - 1] + user_data$moneyMoves[i - 1]
+      } else {
+        y[i] <- NA # no value for days before we've inputted their moneyMove - reveals points as they become relevant
+      }
+    }
+      
+    
     par(mar = c(5.1, 7, 4.1, 2.1)) # Modify margins of plot so we can have horizontal ylab
     
     plot(x, y, pch = 16,
@@ -93,6 +104,7 @@ server <- function(input, output) {
           line = 3,
           las = 1) # ylab title manually
   })
+  
 }
 
 # Run the application 
