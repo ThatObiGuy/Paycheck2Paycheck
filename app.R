@@ -78,7 +78,7 @@ server <- function(input, output) {
     validate(
       need(user_data$days > 0, "Please enter a valid number of days."),
       need(user_data$paycheck > 0, "Please enter a valid paycheck amount.")
-      ) # Cannot build graph without these parameters
+    ) # Cannot build graph without these parameters
     
     x <- seq(1, user_data$days, 1)
     y <- numeric(length(x)) # Initialize y as a numeric vector of zeros
@@ -91,7 +91,7 @@ server <- function(input, output) {
         y[i] <- NA # no value for days before we've inputted their moneyMove - reveals points as they become relevant
       }
     }
-      
+    
     
     par(mar = c(5.1, 7, 4.1, 2.1)) # Modify margins of plot so we can have horizontal ylab
     
@@ -103,6 +103,15 @@ server <- function(input, output) {
           side = 2,
           line = 3,
           las = 1) # ylab title manually
+    
+    # Adding a line to the plot to project our end-of-month balance
+    if (sum(!is.na(y)) > 1) { # If there's more than 1 non-NA point / at least two points
+      fit <- lm(y ~ x) # we're fitting a linear model
+      abline(fit,
+             col = "red",
+             lty = 5, # "line type" - 5 indicates long dashes
+             lwd = 2) # and we're adding it to the plot
+    }
   })
   
 }
