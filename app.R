@@ -6,47 +6,49 @@ library(shinythemes) # Adding themeing package, quick way to make app more appea
 
 # Define UI for application
 ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes library called above - I like the superhero theme, found @ https://rstudio.github.io/shinythemes/
-  
-  navbarPage(
-    title = "Paycheck2Paycheck", # Text displayed in the top left corner
-    
-    tabPanel("Forecasting", # This is the title of this panel - the spending forecast happens here
-             
-             sidebarPanel( # Our "input" panel
-               width = 3, # spacing, allowing for the 3 side-by-side segments
-               
-               tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph
-               numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
-               numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
-               actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values
-               
-               tags$h3("Daily income/expenditure:"), # Here we'll take in data on spending/earning that will populate the graph
-               numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
-               actionButton("moneyMoveButton", "Commit", class = "btn-lg btn-success"), # Button 'locks-in' entered value for a given day
-               
-             ), # sidebarPanel - input ends
-             
-             mainPanel(
-               width = 6, # Spacing, allowing for the 3 side-by-side segments
-               h1("This Paycheck:"),
-               
-               plotOutput("spendPlot"), # Displays plot generated on server side.
-               
-             ), # mainPanel ends
-             
-             sidebarPanel( # Our "image" panel
-               width = 3, # spacing, allowing for the 3 side-by-side segments
-               
-               h4("How we're feeling:"),
-               uiOutput("feelingImage") # Using uiOutput allows image to react to lm's slope
-               
-             ), # sidebarPanel - image  ends
-             
-    ), # tabPanel - Forecasting  ends
-    
-    tabPanel("About", "This panel will be developed in time"),
-    
-  ) # navbarPage ends
+                
+                navbarPage(
+                  title = "Paycheck2Paycheck", # Text displayed in the top left corner
+                  
+                  tabPanel("Forecasting", # This is the title of this panel - the spending forecast happens here
+                           
+                           sidebarPanel( # Our "input" panel
+                             width = 3, # spacing, allowing for the 3 side-by-side segments
+                             
+                             tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph
+                             numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
+                             numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
+                             actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values
+                             
+                             tags$h3("Daily income/expenditure:"), # Here we'll take in data on spending/earning that will populate the graph
+                             numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
+                             actionButton("moneyMoveButton", "Commit", class = "btn-lg btn-success"), # Button 'locks-in' entered value for a given day
+                             
+                           ), # sidebarPanel - input ends
+                           
+                           mainPanel(
+                             width = 6, # Spacing, allowing for the 3 side-by-side segments
+                             h1("This Paycheck:"),
+                             
+                             plotOutput("spendPlot"), # Displays plot generated on server side.
+                             
+                           ), # mainPanel ends
+                           
+                           sidebarPanel( # Our "image" panel
+                             width = 3, # spacing, allowing for the 3 side-by-side segments
+                             
+                             h4("How we're feeling:"),
+                             uiOutput("feelingImage"), # Using uiOutput allows image to react to lm's prediction
+                             
+                             h4("Advice:"),
+                             uiOutput("adviceText")
+                           ), # sidebarPanel - image  ends
+                           
+                  ), # tabPanel - Forecasting  ends
+                  
+                  tabPanel("About", "This panel will be developed in time"),
+                  
+                ) # navbarPage ends
                 
 ) # fluidPage ends
 
@@ -61,7 +63,8 @@ server <- function(input, output) {
                               paycheck = NULL,
                               moneyMoves = numeric(),
                               pressCounter = 0,
-                              imageURL = "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png")
+                              imageURL = "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png",
+                              advice = " ")
   
   observeEvent(input$buildGraphButton, { # observeEvents looks for 'build graph' button presses, at which point it can update the stored values
     user_data$days <- input$days
@@ -98,9 +101,13 @@ server <- function(input, output) {
     par(mar = c(5.1, 7, 4.1, 2.1)) # Modify margins of plot so we can have horizontal ylab
     
     plot(x, y, pch = 16,
-         ylim = c(0, user_data$paycheck * 1.2), 
+         ylim = c(-50, user_data$paycheck * 1.2), 
          xlab = "Days",
          ylab = " ") # ylab empty as we want it horizontal
+    abline(h = 0,
+           lwd = 2,
+           lty = 2,
+           col = "black")
     mtext("Balance",
           side = 2,
           line = 3,
@@ -116,16 +123,32 @@ server <- function(input, output) {
       
       
       # Update image based on the slope of the linear model
-      if (coef(fit)[2] < 0) { # If the slope is negative we'll display the concerned tom image
-        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/UnsettledTom.png"
-      } else { # If the slope is positive we'll display the gigachad image
+      if (user_data$paycheck < 50){
+        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/RedSkeletonsStare.png"
+        user_data$adviceText <- "How did we get here?"
+      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > 0) { # 
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/gigachad.png"
+        user_data$adviceText <- "Keep it up, You've got MONEY!"
+      } else if (user_data$paycheck + user_data$days*coef(fit)[2] == 0) { # 
+        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/spiderman.png"
+        user_data$adviceText <- "Surviving another month!"
+      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > -50){
+        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/UnsettledTom.png"
+        user_data$adviceText <- "It's no so bad, you've got savings... or friends?"
+      } else {
+        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/TwoThousandYardStare.png"
+        user_data$adviceText <- "good luck soldier"
       }
+      
     }
   })
   
   output$feelingImage <- renderUI({ # renderUI allows us to work with uiOutput above
     img(src = user_data$imageURL)
+  })
+  
+  output$adviceText <- renderUI({
+    p(user_data$adviceText)
   })
   
 }
