@@ -6,49 +6,70 @@ library(shinythemes) # Adding themeing package, quick way to make app more appea
 
 # Define UI for application
 ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes library called above - I like the superhero theme, found @ https://rstudio.github.io/shinythemes/
-                
-                navbarPage(
-                  title = "Paycheck2Paycheck", # Text displayed in the top left corner
-                  
-                  tabPanel("Forecasting", # This is the title of this panel - the spending forecast happens here
-                           
-                           sidebarPanel( # Our "input" panel
-                             width = 3, # spacing, allowing for the 3 side-by-side segments
-                             
-                             tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph
-                             numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
-                             numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
-                             actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values
-                             
-                             tags$h3("Daily income/expenditure:"), # Here we'll take in data on spending/earning that will populate the graph
-                             numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
-                             actionButton("moneyMoveButton", "Commit", class = "btn-lg btn-success"), # Button 'locks-in' entered value for a given day
-                             
-                           ), # sidebarPanel - input ends
-                           
-                           mainPanel(
-                             width = 6, # Spacing, allowing for the 3 side-by-side segments
-                             h1("This Paycheck:"),
-                             
-                             plotOutput("spendPlot"), # Displays plot generated on server side.
-                             
-                           ), # mainPanel ends
-                           
-                           sidebarPanel( # Our "image" panel
-                             width = 3, # spacing, allowing for the 3 side-by-side segments
-                             
-                             h4("How we're feeling:"),
-                             uiOutput("feelingImage"), # Using uiOutput allows image to react to lm's prediction
-                             
-                             h4("Advice:"),
-                             uiOutput("adviceText")
-                           ), # sidebarPanel - image  ends
-                           
-                  ), # tabPanel - Forecasting  ends
-                  
-                  tabPanel("About", "This panel will be developed in time"),
-                  
-                ) # navbarPage ends
+  
+  navbarPage(
+    title = "Paycheck2Paycheck", # Text displayed in the top left corner
+    
+    tabPanel("Forecasting", # This is the title of this panel - the spending forecast happens here
+             
+             sidebarPanel( # Our "input" panel
+               width = 3, # spacing, allowing for the 3 side-by-side segments
+               
+               tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph
+               numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
+               numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
+               actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values
+               
+               tags$h3("Daily income/expenditure:"), # Here we'll take in data on spending/earning that will populate the graph
+               numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
+               actionButton("moneyMoveButton", "Commit", class = "btn-lg btn-success"), # Button 'locks-in' entered value for a given day
+               
+             ), # sidebarPanel - input ends
+             
+             mainPanel(
+               width = 6, # Spacing, allowing for the 3 side-by-side segments
+               h1("This Paycheck:"),
+               
+               plotOutput("spendPlot"), # Displays plot generated on server side.
+               
+             ), # mainPanel ends
+             
+             sidebarPanel( # Our "image" panel
+               width = 3, # spacing, allowing for the 3 side-by-side segments
+               
+               h4("How we're feeling:"),
+               uiOutput("feelingImage"), # Using uiOutput allows image to react to lm's prediction
+               
+               h4("Advice:"),
+               uiOutput("adviceText")
+             ), # sidebarPanel - image  ends
+             
+    ), # tabPanel - Forecasting  ends
+    
+    tabPanel("About",
+            h2("About Paycheck2Paycheck"),
+            p("A Shiny app to help people living \"Paycheck-to-Paycheck\" to see if they're spending too fast."),
+            p("This is being developed as my application to the 2024/2025 Maynooth Data Science \"Shiny App Developement Competition\""),
+            p("Intention is to have an easy-to-use webapp that will take in spending from a user on one side and populate a graph in the main section."),
+            p("This graph will fit a line to the spending and through a series of informative & humours images indicate to the user if they're going to make it through to their next paycheck with any money."),
+             
+            h3("How to Use the App"),
+            p("1. Enter your paycheck amount and the number of days until your next paycheck."),
+            p("2. Click 'Build Graph'."),
+            p("3. Input your daily aggregate income/expenditure"),
+            p("4. Use the advice and visual feedback to make more informed financial decisions ;)"),
+             
+            h3("About the Developer"),
+            p("Owen F. O'Connor is a third year MH207 data science student"),
+            p("you can email @ owen.oconnor.2024@mumail.ie"),
+            tags$a(href="https://mulife.ie/society/data-science", "Data science society"),
+            br(),
+            tags$a(href="https://www.instagram.com/that.obi.guy/", "Instagram"),
+            br(),
+            tags$a(href="https://www.linkedin.com/in/owen-f-o-connor-7565001b3/", "LinkedIn")
+    )
+             
+  ) # navbarPage ends
                 
 ) # fluidPage ends
 
@@ -64,13 +85,15 @@ server <- function(input, output) {
                               moneyMoves = numeric(),
                               pressCounter = 0,
                               imageURL = "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png",
-                              advice = " ")
+                              adviceText = "waiting on more data before providing advice")
   
   observeEvent(input$buildGraphButton, { # observeEvents looks for 'build graph' button presses, at which point it can update the stored values
     user_data$days <- input$days
     user_data$paycheck <- input$paycheck
     user_data$moneyMoves <- numeric() # Reset moneyMoves when building a new graph
     user_data$pressCounter <- 0 # Reset counter when building a new graph
+    user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png"
+    user_data$adviceText <- "waiting on more data before providing advice"
   })
   
   observeEvent(input$moneyMoveButton, { # Appends moneyMoves vector with new values, each ideally for consecutive days
@@ -123,19 +146,16 @@ server <- function(input, output) {
       
       
       # Update image based on the slope of the linear model
-      if (user_data$paycheck < 50){
-        user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/RedSkeletonsStare.png"
-        user_data$adviceText <- "How did we get here?"
-      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > 0) { # 
+      if (user_data$paycheck + user_data$days*coef(fit)[2] > 0) { # we expect to have some money at when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/gigachad.png"
         user_data$adviceText <- "Keep it up, You've got MONEY!"
-      } else if (user_data$paycheck + user_data$days*coef(fit)[2] == 0) { # 
+      } else if (user_data$paycheck + user_data$days*coef(fit)[2] == 0) { # we expect to have no debt when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/spiderman.png"
         user_data$adviceText <- "Surviving another month!"
-      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > -50){
+      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > -50){ # we expect to have less than 50 euros debt when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/UnsettledTom.png"
         user_data$adviceText <- "It's no so bad, you've got savings... or friends?"
-      } else {
+      } else { # we expect to have more than or equal to 50 euros debt when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/TwoThousandYardStare.png"
         user_data$adviceText <- "good luck soldier"
       }
