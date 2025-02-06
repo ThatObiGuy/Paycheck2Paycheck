@@ -17,6 +17,7 @@ ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes
                
                tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph
                numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
+               numericInput("rent", "rent contribution", value = 0, min = 0, max = 5000), # Must be non-negative
                numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
                actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values
                
@@ -52,7 +53,11 @@ ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes
             p("1. Enter your paycheck amount and the number of days until your next paycheck."),
             p("2. Click 'Build Graph'."),
             p("3. Input your daily aggregate income/expenditure"),
-            p("4. Use the advice and visual feedback to make more informed financial decisions ;)")
+            p("4. Use the advice and visual feedback to make more informed financial decisions ;)"),
+            br(),
+            tags$iframe(width="560", height="315", src="https://www.youtube.com/embed/yInCE7z2aM4?si=I2e91TrUBemGhsNw",
+                        frameborder="0", allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture",
+                        allowfullscreen=NA,) # Placeholder video for now, need to put video together on how-to
             
     ), # tabPanel - How to use ends
     
@@ -89,6 +94,7 @@ server <- function(input, output) {
   # Reactive values to store inputs
   user_data <- reactiveValues(days = NULL,
                               paycheck = NULL,
+                              rent = NULL,
                               moneyMoves = numeric(),
                               pressCounter = 0,
                               imageURL = "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png",
@@ -97,6 +103,7 @@ server <- function(input, output) {
   observeEvent(input$buildGraphButton, { # observeEvents looks for 'build graph' button presses, at which point it can update the stored values
     user_data$days <- input$days
     user_data$paycheck <- input$paycheck
+    user_data$rent <- input$rent
     user_data$moneyMoves <- numeric() # Reset moneyMoves when building a new graph
     user_data$pressCounter <- 0 # Reset counter when building a new graph
     user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/Waiting.png"
@@ -117,7 +124,7 @@ server <- function(input, output) {
     
     x <- seq(1, user_data$days, 1)
     y <- numeric(length(x+1)) # Initialize y as a numeric vector of zeros ## Plus 1 to include day of paycheck recieved
-    y[1] <- user_data$paycheck # Balance begins as the amount your paycheck is worth
+    y[1] <- (user_data$paycheck - user_data$rent) # Balance begins as the amount of your paycheck less rent
     
     for (i in 2:length(x)) {
       if (i - 1 <= length(user_data$moneyMoves)) {
@@ -131,7 +138,7 @@ server <- function(input, output) {
     par(mar = c(5.1, 7, 4.1, 2.1)) # Modify margins of plot so we can have horizontal ylab
     
     plot(x, y, pch = 16,
-         ylim = c(-50, user_data$paycheck * 1.2), 
+         ylim = c(-50, (user_data$paycheck-user_data$rent) * 1.25), 
          xlab = "Days",
          ylab = " ") # ylab empty as we want it horizontal
     abline(h = 0,
@@ -153,13 +160,13 @@ server <- function(input, output) {
       
       
       # Update image based on the slope of the linear model
-      if (user_data$paycheck + user_data$days*coef(fit)[2] > 0) { # we expect to have some money at when we receive next paycheck
+      if ((user_data$paycheck - user_data$rent) + user_data$days*coef(fit)[2] > 0) { # we expect to have some money at when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/gigachad.png"
         user_data$adviceText <- "Keep it up, You've got MONEY!"
-      } else if (user_data$paycheck + user_data$days*coef(fit)[2] == 0) { # we expect to have no debt when we receive next paycheck
+      } else if ((user_data$paycheck - user_data$rent) + user_data$days*coef(fit)[2] == 0) { # we expect to have no debt when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/spiderman.png"
         user_data$adviceText <- "Surviving another month!"
-      } else if (user_data$paycheck + user_data$days*coef(fit)[2] > -50){ # we expect to have less than 50 euros debt when we receive next paycheck
+      } else if ((user_data$paycheck - user_data$rent) + user_data$days*coef(fit)[2] > -50){ # we expect to have less than 50 euros debt when we receive next paycheck
         user_data$imageURL <- "https://raw.githubusercontent.com/ThatObiGuy/Paycheck2Paycheck/refs/heads/main/ImagesResized/UnsettledTom.png"
         user_data$adviceText <- "It's no so bad, you've got savings... or friends?"
       } else { # we expect to have more than or equal to 50 euros debt when we receive next paycheck
