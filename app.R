@@ -6,105 +6,107 @@ library(shinythemes) # Adding themeing package, quick way to make app more appea
 
 # Define UI for application
 ui <- fluidPage(theme = shinytheme("superhero"), # Implementation of shinythemes library called above - I like the superhero theme, found @ https://rstudio.github.io/shinythemes/
-  
-  navbarPage( # Allows us to use navigation bar at the top of the page, and structure in tabs
-    title = "Paycheck2Paycheck", # Text displayed in the top left corner
-    
-    tabPanel("Forecasting", # This is the title of this panel, displayed in our navbar - the spending forecast happens here
-             
-             sidebarPanel( # Our "input" panel within the forecasting tab
-               width = 3, # spacing, allowing for the 3 side-by-side segments
-               
-               tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph. We can use tags to access HTML from shiny
-               numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
-               numericInput("rent", "rent contribution", value = 0, min = 0, max = 5000), # Must be non-negative
-               numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
-               actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values. classes lg makes it large, and success makes it green
-               
-               tags$h3("Daily aggregate:"), # Here we'll take in data on spending/earning that will populate the graph
-               numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
-               actionButton("moneyEarnButton", "EARN", class = "btn-lg btn-success"), # Buttons 'locks-in' entered value for a given day
-               actionButton("moneySpendButton", "SPEND", class = "btn-lg btn-danger"), # A green EARN and red SPEND button make app more intuative
-             ), # sidebarPanel - input ends
-             
-             mainPanel(
-               width = 6, # Spacing, allowing for the 3 side-by-side segments
-               h1("This Paycheck:"),
-               
-               plotOutput("spendPlot"), # Displays plot generated on server side.
-             ), # mainPanel ends
-             
-             sidebarPanel( # Our "image" panel - Here we provide feedback through images
-               width = 3, # spacing, allowing for the 3 side-by-side segments
-               
-               h4("How we're feeling:"),
-               uiOutput("feelingImage"), # Using uiOutput allows image to react to lm's slope.
-               
-               h4("Advice:"),
-               uiOutput("adviceText")
-             ), # sidebarPanel - image  ends
-             
-             sidebarPanel( # Our "Upload/Download" panel - Here we add functionality to save and resume previous progress
-               selectInput("menu", "Upload/Download session progress:", # Drop-down style menu makes page appear "less-busy"
-                           choices = c("Select an option:", "Upload", "Download")),
-               conditionalPanel( # Conditional panels appear when their 'choice' from above is selected
-                 condition = "input.menu == 'Select an option:'",
-               ),
-               conditionalPanel(
-                 condition = "input.menu == 'Upload'",
-                 h4("Resume progress:"),
-                 fileInput("upload", "Choose .rda File", # Use of .rda file allows for me to use less code, and makes sense to me, an r enjoyer.
-                           multiple = FALSE, # Only makes sense to upload one file, app can only handle 1 session at a given time.
-                           accept = c(".rda")), # Makes sure extension of file is .rda
-               ), # fileInput gives us a button to chose file, upload progress from different session
-               conditionalPanel(
-                 condition = "input.menu == 'Download'",
-                 h4("Save for later:"),
-                 downloadButton("downloadData", "Download"), # title name for us to refer to from server side and label for button
-               ), # fileInput gives us a button for download if user wants to come back to it later
-
-             ), # sidebarPanel - download/upload  ends
-             
-    ), # tabPanel - Forecasting  ends
-    
-    tabPanel("How to use", # A description of how the app should be used
-             
-            h2("How to Use the App"),
-            p("1. Enter your paycheck amount and the number of days until your next paycheck."),
-            p("2. Click 'Build Graph'."),
-            p("3. Input your daily aggregate earnings/spending"),
-            p("4. Use the advice and visual feedback to make more informed financial decisions ;)"),
-            hr(),
-            p("You can watch the video below as an example and guide."),
-            div(style = "text-align: center;", 
-                tags$iframe(width="560", height="315",
-                            src="https://www.youtube.com/embed/OErMB4WYkjE?si=0hzi8FV5ioTW2dlI",
-                            frameborder="0", allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture",
-                            allowfullscreen=NA)) # A quick video showing how app is to be used.
-            
-    ), # tabPanel - How to use ends
-    
-    
-    tabPanel("About", # Some information about the app
-             
-             h2("About Paycheck2Paycheck"), 
-             p("A Shiny app to help people living \"Paycheck-to-Paycheck\" to see if they're spending too fast."),
-             p("This is being developed as my application to the 2024/2025 Maynooth Data Science \"Shiny App Developement Competition\""),
-             p("Intention is to have an easy-to-use webapp that will take in spending from a user on one side and populate a graph in the main section."),
-             p("This graph will fit a line to the spending and through a series of informative & humours images indicate to the user if they're going to make it through to their next paycheck with any money."),
-             hr(), # Horizontal rule
-             
-             h3("About the Developer"),
-             p("Owen F. O'Connor is a third year MH207 data science student"),
-             p("you can email @ owen.oconnor.2024@mumail.ie"),
-             tags$a(href="https://mulife.ie/society/data-science", "Data science society"),
-             br(),
-             tags$a(href="https://www.instagram.com/that.obi.guy/", "Instagram"),
-             br(),
-             tags$a(href="https://www.linkedin.com/in/owen-f-o-connor-7565001b3/", "LinkedIn")
-    )
-             
-  ) # navbarPage ends
+                
+                navbarPage( # Allows us to use navigation bar at the top of the page, and structure in tabs
+                  title = "Paycheck2Paycheck", # Text displayed in the top left corner
+                  
+                  tabPanel("About", # Some information about the app
+                           
+                           h2("About Paycheck2Paycheck"), 
+                           p("A Shiny app to help people living \"Paycheck-to-Paycheck\" to see if they're spending too fast."),
+                           p("This app was developed as my application to the 2024/2025 Maynooth Data Science \"Shiny App Developement Competition\""),
+                           p("Intention is to have an easy-to-use webapp that will take in spending from a user on one side and populate a graph in the main section."),
+                           p("This graph will fit a line to the spending and through a series of informative & humours images indicate to the user if they're going to make it through to their next paycheck with any money."),
+                           hr(), # Horizontal rule
+                           
+                           h3("About the Developer"),
+                           p("Owen F. O'Connor is a third year MH207 data science student"),
+                           p("you can email me @ owen.oconnor.2024@mumail.ie"),
+                           tags$a(href="https://mulife.ie/society/data-science", "Data science society"),
+                           br(),
+                           tags$a(href="https://www.instagram.com/that.obi.guy/", "Instagram"),
+                           br(),
+                           tags$a(href="https://www.linkedin.com/in/owen-f-o-connor-7565001b3/", "LinkedIn")
+                           
+                  ), # tabPanel - About ends
+                  
+                  
+                  tabPanel("How to use", # A description of how the app should be used
+                           
+                           h2("How to Use the App"),
+                           p("1. Enter your paycheck amount, rent contribution and the number of days until your next paycheck."),
+                           p("2. Click 'Build Graph'."),
+                           p("3. Input your daily aggregate earnings/spending"),
+                           p("4. Use the advice and visual feedback to make more informed financial decisions ;)"),
+                           hr(),
+                           p("You can watch the video below as an example and guide."),
+                           div(style = "text-align: center;", 
+                               tags$iframe(width="560", height="315",
+                                           src="https://www.youtube.com/embed/OErMB4WYkjE?si=0hzi8FV5ioTW2dlI",
+                                           frameborder="0", allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture",
+                                           allowfullscreen=NA)) # A quick video showing how app is to be used.
+                           
+                  ), # tabPanel - How to use ends
+                  
+                  
+                  tabPanel("Forecasting", # This is the title of this panel, displayed in our navbar - the spending forecast happens here
+                           
+                           sidebarPanel( # Our "input" panel within the forecasting tab
+                             width = 3, # spacing, allowing for the 3 side-by-side segments
+                             
+                             tags$h3("Parameters:"), # Here we'll prompt for paycheck amount and days till next, these will help us construct the graph. We can use tags to access HTML from shiny
+                             numericInput("paycheck", "Paycheck amount", value = 0, min = 0, max = 5000), # Must be non-negative
+                             numericInput("rent", "rent contribution", value = 0, min = 0, max = 5000), # Must be non-negative
+                             numericInput("days", "Days till next paycheck", value = 0, min = 0, max = 365), # Also must be non-negative
+                             actionButton("buildGraphButton", "Build Graph", class = "btn-lg btn-success"), # Button 'locks-in' entered values. classes lg makes it large, and success makes it green
+                             
+                             tags$h3("Daily aggregate:"), # Here we'll take in data on spending/earning that will populate the graph
+                             numericInput("moneyMove", "Money Move", value = 0, min = -1000, max = 1000), # Money can move in or out of ones account.
+                             actionButton("moneyEarnButton", "EARN", class = "btn-lg btn-success"), # Buttons 'locks-in' entered value for a given day
+                             actionButton("moneySpendButton", "SPEND", class = "btn-lg btn-danger"), # A green EARN and red SPEND button make app more intuative
+                           ), # sidebarPanel - input ends
+                           
+                           mainPanel(
+                             width = 6, # Spacing, allowing for the 3 side-by-side segments
+                             h1("This Paycheck:"),
+                             
+                             plotOutput("spendPlot"), # Displays plot generated on server side.
+                           ), # mainPanel ends
+                           
+                           sidebarPanel( # Our "image" panel - Here we provide feedback through images
+                             width = 3, # spacing, allowing for the 3 side-by-side segments
+                             
+                             h4("How we're feeling:"),
+                             uiOutput("feelingImage"), # Using uiOutput allows image to react to lm's slope.
+                             
+                             h4("Advice:"),
+                             uiOutput("adviceText")
+                           ), # sidebarPanel - image  ends
+                           
+                           sidebarPanel( # Our "Upload/Download" panel - Here we add functionality to save and resume previous progress
+                             selectInput("menu", "Upload/Download session progress:", # Drop-down style menu makes page appear "less-busy"
+                                         choices = c("Select an option:", "Upload", "Download")),
+                             conditionalPanel( # Conditional panels appear when their 'choice' from above is selected
+                               condition = "input.menu == 'Select an option:'",
+                             ),
+                             conditionalPanel(
+                               condition = "input.menu == 'Upload'",
+                               h4("Resume progress:"),
+                               fileInput("upload", "Choose .rda File", # Use of .rda file allows for me to use less code, and makes sense to me, an r enjoyer.
+                                         multiple = FALSE, # Only makes sense to upload one file, app can only handle 1 session at a given time.
+                                         accept = c(".rda")), # Makes sure extension of file is .rda
+                             ), # fileInput gives us a button to chose file, upload progress from different session
+                             conditionalPanel(
+                               condition = "input.menu == 'Download'",
+                               h4("Save for later:"),
+                               downloadButton("downloadData", "Download"), # title name for us to refer to from server side and label for button
+                             ), # fileInput gives us a button for download if user wants to come back to it later
+                             
+                           ), # sidebarPanel - download/upload  ends
+                           
+                  ), # tabPanel - Forecasting  ends
+                  
+                ) # navbarPage ends
                 
 ) # fluidPage ends
 
