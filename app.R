@@ -1,4 +1,4 @@
-# Paycheck - 2 - paycheck # check out my new project - VAR
+# Paycheck - 2 - paycheck # check out my new project - VAR # ANKUSH IS GOOD AT GIT
 # Owen F. O'Connor
 
 library(shiny)
